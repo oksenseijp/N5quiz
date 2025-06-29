@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>N5隨機考試</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+    .quiz-container {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+    }
+    .question {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+    }
+    .options button {
+      display: block;
+      width: 100%;
+      margin: 5px 0;
+      padding: 10px;
+      font-size: 1em;
+      border: none;
+      border-radius: 8px;
+      background-color: #eee;
+      cursor: pointer;
+    }
+    .options button:hover {
+      background-color: #ddd;
+    }
+    #feedback {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    #score {
+      text-align: center;
+      font-size: 1.2em;
+      margin-top: 20px;
+    }
+    #timer {
+      text-align: right;
+      font-weight: bold;
+    }
+    .correct {
+      font-size: 1.2em;
+      color: green;
+    }
+    .wrong-log {
+      text-align: left;
+      margin-top: 20px;
+      border-top: 1px solid #ccc;
+      padding-top: 10px;
+    }
+    .wrong-log div {
+      margin-bottom: 10px;
+    }
+    @media (max-width: 600px) {
+      .quiz-container {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <h1>N5隨機考試（全100問）</h1>
+    <div id="timer">残り時間: <span id="time">30</span>秒</div>
+    <div id="quiz">
+      <div class="question" id="question"></div>
+      <div class="options" id="options"></div>
+      <div id="feedback"></div>
+    </div>
+    <div id="score"></div>
+    <div id="wrong-list" class="wrong-log"></div>
+    <button onclick="endQuiz()">⏹️ 終了</button>
+    <button onclick="restartQuiz()">🔁 もう一度</button>
+  </div>
+
+  <script>
+
+    const questions = [
+  { q: "朝6時（　）家へ帰ります。", options: ["は", "に", "を", "で"], answer: 1 },
+  { q: "昨日、コーヒー（　）飲みました。", options: ["を", "に", "が", "で"], answer: 0 },
+  { q: "テレビを（　　）ながら、コーヒーを飲みます。", options: ["みま", "み", "よみ", "みて"], answer: 1 },
+  { q: "いっしょに旅行に（　　　　）。", options: ["しませんか", "行きませんか", "食べませんか", "みませんか"], answer: 1 },
+  { q: "映画を（　　　　）、ご飯を食べましょう。", options: ["見てから", "見ての", "見ます", "見"], answer: 0 },
+  { q: "東京で新幹線に（　　　）、京都で新幹線を降りました。", options: ["のらず", "のって", "のります", "の"], answer: 1 },
+  { q: "ネクタイを（　　　）会社へ行きました。", options: ["入れて", "します", "して", "かぶって"], answer: 2 },
+  { q: "あした9時にここへ（　　　）ください。", options: ["見て", "来て", "覚えて", "もって"], answer: 1 },
+  { q: "箱（　　）中になに（　　）ありますか。", options: ["の、が", "を、で", "は、が", "の、を"], answer: 0 },
+  { q: "母は学校で先生を（　　　　）。", options: ["しています", "して", "し", "しな"], answer: 0 },
+  { q: "会社の電話番号を知っていますか。はい、（　　　　　　）。", options: ["知っています", "知ります", "知ろう", "知って"], answer: 0 },
+  { q: "（　　　　）まえに、手を洗ってください。", options: ["ごはんをたべ", "ごはんをたべる", "ごはん", "ごはんは"], answer: 1 },
+  { q: "疲れましたから、お風呂に（　　　）ないで、寝ました。", options: ["入る", "入り", "入れ", "入ら"], answer: 2 },
+  { q: "時間が（　　　）、困っています。", options: ["ない", "なかったで", "なくて", "ないが"], answer: 2 },
+  { q: "今日は（　　　　）ないでください。", options: ["遊びに行く", "遊びに行き", "遊びに", "遊びに行か"], answer: 2 },
+  { q: "勉強が（　　　　）ました。", options: ["好きで", "好き", "好きな", "好きに"], answer: 1 },
+  { q: "あついですから、窓（　　）開けましょう。", options: ["が", "を", "は", "の"], answer: 1 },
+  { q: "箱（　　）中になに（　　）ありますか。", options: ["の、が", "を、で", "は、が", "の、を"], answer: 0 },
+  { q: "窓（　　）閉まっています。", options: ["が", "で", "に", "を"], answer: 0 },
+  { q: "あそこに社員が（　　　　）います。", options: ["ならべて", "ならび", "ならべ", "ならんで"], answer: 3 },
+  { q: "部屋のクーラーは（　　　）あります。", options: ["けして", "きえて", "けす", "きえる"], answer: 0 },
+  { q: "（　　　）あとで、いつもビールを飲みます。", options: ["働く", "仕事する", "働いた", "仕事し"], answer: 2 },
+  { q: "日曜日はいつもテニスをし（　　）、映画を見（　　）しています。", options: ["たり", "た", "で", "んで"], answer: 0 },
+  { q: "あの人はたぶん（　　　）でしょう。", options: ["日本人", "日本人だ", "日本人が", "日本人も"], answer: 0 },
+  { q: "マレーシアから（　　　）人は誰ですか。", options: ["来ないような", "来た", "来て", "来"], answer: 1 },
+  { q: "日本人は（　　　）とき、「いただきます」といいます。", options: ["ごはんを食べた", "ごはんを食べる", "ごはんを食べ", "ごはんを食べない"], answer: 1 },
+  { q: "ドラゴンフルーツ（　　）食べ物を知っていますか。", options: ["と", "が", "が", "という"], answer: 3 },
+  { q: "電車は11時（　　）に着きます。", options: ["ごろ", "で", "は", "から"], answer: 0 },
+  { q: "今日はいい天気ですね。（　　）ちょっと暑いですね。", options: ["そして", "それから", "でも", "なので"], answer: 2 },
+  { q: "今日の授業は（　　　）終わりました。", options: ["とても", "もう", "もう一度", "まだ"], answer: 1 },
+  { q: "駅のまわりにはカラオケ（　　）コンビニ（　　）があります。", options: ["や、など", "を、で", "は、が", "の、を"], answer: 0 },
+  { q: "山田さんはこの会社（　　）働いています。", options: ["が", "で", "が", "を"], answer: 1 },
+  { q: "行く（　　）行かない（　　）わかりません。", options: ["の、の", "で、で", "か、か", "が、を"], answer: 2 },
+  { q: "陳さんのかばんはどれ（　　）わかりません。", options: ["の", "を", "が", "か"], answer: 2 },
+  { q: "お金は少ししか（　　　）。", options: ["あります", "ありました", "ありません", "ある"], answer: 2 },
+  { q: "このおかしを一人一つ（　　）とってください。", options: ["に", "しか", "ずつ", "が"], answer: 2 },
+  { q: "女の子が一人（　　）います。", options: ["だけ", "しか", "が", "を"], answer: 0 },
+  { q: "このバスは大学（　　）行きません。", options: ["へが", "へで", "への", "へは"], answer: 3 },
+  { q: "本（　　）ノート（　　）あります。", options: ["は、は", "も、も", "は、が", "で、で"], answer: 1 },
+  { q: "飛行機（　　）アメリカへ行きました。", options: ["で", "を", "は", "の"], answer: 0 },
+  { q: "私は（　　）ごはんを食べていません。", options: ["もう", "が", "なので", "また"], answer: 3 },
+  { q: "ひらがなは（　　　）、漢字もわかります。", options: ["たぶん", "しかし", "なので", "もちろん"], answer: 3 },
+  { q: "台北はとても便利です。（　　）食べ物が高くて困ります。", options: ["なので", "でも", "しか", "それでは"], answer: 1 },
+  { q: "私は あしたの ひこうき（　　）国へ 帰ります。", options: ["に", "で", "か", "を"], answer: 1 },
+  { q: "先週 デパートで かばん（　　）くつなどを 買いました。", options: ["は", "も", "へ", "や"], answer: 3 },
+  { q: "私は 毎朝 7時ごろ 家（　　）出ます。", options: ["を", "と", "が", "で"], answer: 0 },
+  { q: "きのう スーパーで 田中さん（　　）会いました。", options: ["を", "の", "で", "に"], answer: 2 },
+  { q: "私の うちの ほんだなは、きょねん 父（　　）作りました。", options: ["や", "が", "を", "で"], answer: 1 },
+  { q: "今日 やおやで  りんごを 買いました。五つ（　　）300円でした。", options: ["に", "と", "で", "や"], answer: 2 },
+  { q: "きのう（　　）少し 寒かったですが、今日（　　）寒くないです。", options: ["は、は", "に、に", "も、も", "を、を"], answer: 0 },
+  { q: "南町は、海が きれい（　　）、静かです。", options: ["も", "や", "で", "と"], answer: 2 },
+  { q: "前川「林さん、（　　）に ある カメラは 林さんのですか。」", options: ["そこ", "どこ", "その", "どの"], answer: 0 },
+  { q: "A「先週 はじめて スキーを しました。」\nB「そうですか。（　　）でしたか。」", options: ["いくつ", "いかが", "どなた", "どちら"], answer: 1 },
+  { q: "ケン「いいえ、（　　）です。来週 始まります。」", options: ["よく", "もう", "ちょっと", "まだ"], answer: 3 },
+  { q: "いしゃ「今日から 一週間 薬を 飲んで、来週の 月曜日に（　　）来て ください」", options: ["たくさん", "あまり", "また", "だんだん"], answer: 2 },
+  { q: "父は 毎朝 コーヒーを（　　）ながら 新聞を 読みます。", options: ["飲む", "飲み", "飲んで", "飲んだ"], answer: 1 },
+  { q: "私は 小さいとき、なっとうが 好き（　　）でした。", options: ["ない", "じゃない", "ありません", "じゃありません"], answer: 3 },
+  { q: "すみません、いちごの ケーキを 二つ（　　）。", options: ["ありますか", "どうぞ", "ください", "ほしいですか"], answer: 2 },
+  { q: "キムさんも（　　　）。", options: ["来ませんか", "来ていますか", "来ませんでしたか", "来ていましたか"], answer: 0 },
+  { q: "わたしの へやは この アパートの 2（　　）です。", options: ["ほん", "さつ", "だい", "かい"], answer: 3 },
+  { q: "その ナイフで りんごを（　　）ください。", options: ["おきて", "つけて", "しめて", "きって"], answer: 3 },
+  { q: "（　　）を わすれましたから、じかんが わかりません。", options: ["じしょ", "ちず", "とけい", "さいふ"], answer: 2 },
+  { q: "わたしの うちは えきに ちかいですから、（　　）です。", options: ["べんり", "じょうぶ", "いっぱい", "へた"], answer: 0 },
+  { q: "なつやすみは まいにち（　　）で およぎました。", options: ["レストラン", "プール", "エレベーター", "ビル"], answer: 1 },
+  { q: "しらない ことばが ありましたから、せんせいに（　　）しました。", options: ["しつもん", "べんきょう", "れんしゅう", "じゅぎょう"], answer: 0 },
+  { q: "この へやは あついですから、（　　）を あけましょう。", options: ["おふろ", "まど", "エアコン", "テーブル"], answer: 1 },
+  { q: "きのうは がっこうで たくさん かんじを（　　）。", options: ["うりました", "もちました", "おぼえました", "こまりました"], answer: 2 },
+  { q: "この コーヒーは、さとうを たくさん いれましたから、（　　）です。", options: ["わかい", "くろい", "まるい", "あまい"], answer: 3 },
+  { q: "つよい かぜが（　　）います。", options: ["ふいて", "いそいで", "とんで", "はしって"], answer: 0 },
+  { q: "わたしの へやは この（　　）の 2かいです。", options: ["エレベーター", "プール", "エアコン", "アパート"], answer: 3 },
+  { q: "さとうさんは ギターを じょうずに（　　）。", options: ["うたいます", "ききます", "ひきます", "あそびます"], answer: 2 },
+  { q: "テーブルに おさらと はしを（　　）ください。", options: ["ならべて", "とって", "たべて", "あらって"], answer: 0 },
+  { q: "けさ そうじを したから へやは（　　）です。", options: ["きれい", "きたない", "あかるい", "くらい"], answer: 0 },
+  { q: "きょうは 500（　　）およぎました。", options: ["ど", "ばん", "メートル", "グラム"], answer: 2 },
+  { q: "えきから たいしかんまでの（　　）を かいて ください。", options: ["しゃしん", "ちず", "てがみ", "きっぷ"], answer: 1 },
+  { q: "うるさいから テレビを（　　）ください。", options: ["けして", "つけて", "しめて", "あけて"], answer: 0 },
+  { q: "きょうは （　　）が ふって います。", options: ["くもり", "はれ", "かぜ", "ゆき"], answer: 3 },
+  { q: "日本（　　）ラーメンは おいしいです。", options: ["に", "の", "を", "へ"], answer: 1 },
+  { q: "わたしには きょうだいが 二人 います。弟（　　）妹です。", options: ["は", "も", "と", "か"], answer: 2 },
+  { q: "きのう、わたしは ひとり（　　）えいがを 見に 行きました。", options: ["が", "を", "で", "は"], answer: 2 },
+  { q: "つぎの かどを 右（　　）まがって ください。", options: ["が", "や", "か", "に"], answer: 3 },
+  { q: "田中さん（　　）きのう どこかに 出かけましたか。", options: ["で", "は", "を", "に"], answer: 1 }
+];
+
+
+    let current = 0;
+    let score = 0;
+    let timer;
+    let timeLeft = 30;
+    let wrongAnswers = [];
+    let shuffledQuestions = [];
+
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function shuffleOptions(q) {
+      const options = [...q.options];
+      const correct = options[q.answer];
+      for (let i = options.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [options[i], options[j]] = [options[j], options[i]];
+      }
+      return { options, correctIndex: options.indexOf(correct) };
+    }
+
+    function showQuestion() {
+      document.getElementById('feedback').textContent = '';
+      timeLeft = 30;
+      document.getElementById('time').textContent = timeLeft;
+
+      const q = shuffledQuestions[current];
+      const { options, correctIndex } = shuffleOptions(q);
+
+      const questionEl = document.getElementById('question');
+      const optionsEl = document.getElementById('options');
+
+      questionEl.textContent = `Q${current + 1}: ${q.q}`;
+      optionsEl.innerHTML = '';
+
+      options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.textContent = opt;
+        btn.onclick = () => {
+          clearInterval(timer);
+          if (idx === correctIndex) {
+            score++;
+            document.getElementById('feedback').textContent = '✅ 正解！';
+          } else {
+            document.getElementById('feedback').textContent = `❌ 不正解（正解：${options[correctIndex]}）`;
+            wrongAnswers.push({
+              question: q.q,
+              selected: opt,
+              correct: options[correctIndex]
+            });
+          }
+          current++;
+          if (current < shuffledQuestions.length) {
+            setTimeout(showQuestion, 1000);
+          } else {
+            showResult();
+          }
+        };
+        optionsEl.appendChild(btn);
+      });
+
+      timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById('time').textContent = timeLeft;
+        if (timeLeft === 0) {
+          clearInterval(timer);
+          document.getElementById('feedback').textContent = `⏰ 時間切れ！（正解：${q.options[q.answer]}）`;
+          wrongAnswers.push({
+            question: q.q,
+            selected: '（未回答）',
+            correct: q.options[q.answer]
+          });
+          current++;
+          if (current < shuffledQuestions.length) {
+            setTimeout(showQuestion, 1000);
+          } else {
+            showResult();
+          }
+        }
+      }, 1000);
+    }
+
+    function showResult() {
+      document.getElementById('quiz').style.display = 'none';
+      document.getElementById('timer').style.display = 'none';
+      const scoreEl = document.getElementById('score');
+      scoreEl.innerHTML = `<strong>間違えた問題 ${wrongAnswers.length} 問：</strong>`;
+      const wrongListEl = document.getElementById('wrong-list');
+      wrongListEl.innerHTML = '';
+      wrongAnswers.forEach((w, i) => {
+        wrongListEl.innerHTML += `<div><strong>Q${i + 1}:</strong> ${w.question}<br> ❌ あなたの回答: ${w.selected}<br> ✅ 正解: <span class="correct">${w.correct}</span></div>`;
+      });
+    }
+
+    function endQuiz() {
+      clearInterval(timer);
+      showResult();
+    }
+
+    function restartQuiz() {
+      current = 0;
+      score = 0;
+      timeLeft = 30;
+      wrongAnswers = [];
+      shuffledQuestions = shuffleArray(questions);
+      document.getElementById('quiz').style.display = 'block';
+      document.getElementById('timer').style.display = 'block';
+      document.getElementById('wrong-list').innerHTML = '';
+      document.getElementById('score').innerHTML = '';
+      showQuestion();
+    }
+
+    shuffledQuestions = shuffleArray(questions);
+    showQuestion();
+  </script>
+</body>
+</html>
